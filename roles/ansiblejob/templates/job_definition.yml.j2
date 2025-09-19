@@ -1,0 +1,50 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: '{{ ansible_operator_meta.name }}'
+  namespace: '{{ ansible_operator_meta.namespace }}'
+spec:
+  ttlSecondsAfterFinished: {{ job_ttl }}
+  template: 
+    metadata: 
+      restartPolicy: Never
+    spec:
+      containers:
+      - name: ansible-executor
+        image: galaxy.lan/ansible-runtime:latest
+        command: ["/bin/bash", "-c"]
+        env:
+        - name: ANSIBLE_HASHI_VAULT_ADDR
+          value:  "{{ vault_jwt | default('') }}"
+        - name: ANSIBLE_HASHI_VAULT_JWT
+          value:  "{{ vault_jwt | default('') }}"
+        - name: VAULT_ADDR
+          value: "{{ vault_url | default('') }}"
+        - name: VAULT_TOKEN
+          value:  "{{ vault_jwt | default('') }}"
+        - name: ANSIBLE_LIMIT
+          value:  "{{ ansible_limit | default('') }}"
+        - name: ANSIBLE_INVENTORY
+          value:  "{{ inventory | default('') }}"
+        - name: ANSIBLE_EXTRAVARS
+          value: "{{ ansible_extravars | default('') }}"
+        - name: ANSIBLE_PLAY
+          value: "{{ play_name | default('') }}"
+        args:
+          - echo "----------------------------------------------------------------" &&
+            echo "--------------------------- STARTING ---------------------------" &&
+            echo "----------------------------------------------------------------" &&
+            echo " playbook  - $ANSIBLE_PLAY" && 
+            echo " inventory - $ANSIBLE_INVENTORY" &&
+            echo "----------------------------------------------------------------" &&
+            echo "------------------------- DOWNLOADING --------------------------" &&
+            echo "----------------------------------------------------------------" &&
+            wget {{ playbook_name }} &&  
+            tar --strip-components=1  -xvzf *.tar.gz  &&
+            ansible-playbook -i $ANSIBLE_INVENTORY $ANSIBLE_PLAY 
+      imagePullSecrets:
+        - name: regcred
+      restartPolicy: Never       
+  backoffLimit: 0
+#  backoffLimit: {{ backoff_limit }}
