@@ -57,7 +57,7 @@
         namespace: "{{ ansible_operator_meta.namespace }}"
         status:
           isFinished: true
-          message: "This job instance reached its backoff limit. Inspect playbook output for more info."
+          error: "This job instance reached its backoff limit. Inspect playbook output for more info."
       when:
         - _attempts >= _failures_allowed
 
@@ -69,6 +69,8 @@
         namespace: "{{ ansible_operator_meta.namespace }}"
         status:
           message: "This job instance is already running or has reached its end state."
+
+          
     - name: End play early
       meta: end_play
   when:
@@ -100,12 +102,12 @@
   kubernetes.core.k8s:
     state: present
     definition: "{{ lookup('template', 'job_definition.yml.j2') }}"
-  register: start_k8s
+  register: result
   ignore_errors: true
 
 - name: debug
   ansible.builtin.debug:
-    var:  start_k8s
+    var:  result
 
 - name: Update AnsibleJob status if job failed
   operator_sdk.util.k8s_status:
@@ -115,8 +117,8 @@
     namespace: "{{ ansible_operator_meta.namespace }}"
     status:
       isFinished: true
-      message: "This job instance failed to template. See the operator logs for details "
-  when: start_k8s.changed == "false"
+      error: "This job instance failed to template. This is likely an incompatible input provided. See the operator logs for details "
+  when: result is failed
 
 
 - name: Set Job 
@@ -143,4 +145,4 @@
           #secretNamespacedName: "{{ ansible_operator_meta.namespace+'/'+(connection_secret | default(tower_auth_secret, true)) }}"
           templateName: "{{ _job_name }}"
           verifySSL: false
-    when: start_k8s.changed != "false"
+  when: result is succeeded

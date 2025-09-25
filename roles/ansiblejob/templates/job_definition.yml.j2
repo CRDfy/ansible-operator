@@ -44,7 +44,7 @@ spec:
             tar --strip-components=1  -xvzf *.tar.gz  &&
             echo "ansible-playbook -i $ANSIBLE_INVENTORY -e $ANSIBLE_EXTRAVARS" && 
             [ -n "$ANSIBLE_EXTRAVARS" ] && echo "$ANSIBLE_EXTRAVARS is not empty" || echo "$ANSIBLE_EXTRAVARS is empty" &&
-            ansible-playbook -i $ANSIBLE_INVENTORY -e $ANSIBLE_EXTRAVARS
+            ansible-playbook -i $ANSIBLE_INVENTORY $ANSIBLE_PLAY
       imagePullSecrets:
         - name: regcred
       restartPolicy: Never       
