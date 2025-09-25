@@ -42,7 +42,9 @@ spec:
             echo "----------------------------------------------------------------" &&
             wget {{ playbook_name }} &&  
             tar --strip-components=1  -xvzf *.tar.gz  &&
-            ansible-playbook -i $ANSIBLE_INVENTORY $ANSIBLE_PLAY 
+            echo "ansible-playbook -i $ANSIBLE_INVENTORY -e $ANSIBLE_EXTRAVARS" && 
+            [ -n "$ANSIBLE_EXTRAVARS" ] && echo "$ANSIBLE_EXTRAVARS is not empty" || echo "$ANSIBLE_EXTRAVARS is empty" &&
+            ansible-playbook -i $ANSIBLE_INVENTORY -e $ANSIBLE_EXTRAVARS
       imagePullSecrets:
         - name: regcred
       restartPolicy: Never       

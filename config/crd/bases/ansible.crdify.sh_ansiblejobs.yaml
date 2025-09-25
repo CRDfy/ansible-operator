@@ -48,6 +48,8 @@ spec:
                 type: string
               vault_url:
                 type: string
+              ansible_extravars:
+                type: string
               # request_timeout:
               #   type: integer
               #   description: Timeout in seconds to wait for a response when querying the API for the job status

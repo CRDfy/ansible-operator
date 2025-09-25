@@ -100,6 +100,23 @@
   kubernetes.core.k8s:
     state: present
     definition: "{{ lookup('template', 'job_definition.yml.j2') }}"
+  register: start_k8s
+  ignore_errors: true
+
+- name: debug
+  ansible.builtin.debug:
+    var:  start_k8s
+
+- name: Update AnsibleJob status if job failed
+  operator_sdk.util.k8s_status:
+    api_version: ansible.crdify.sh/v1alpha1
+    kind: AnsibleJob
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+    status:
+      isFinished: true
+      message: "This job instance failed to template. See the operator logs for details "
+  when: start_k8s.changed == "false"
 
 
 - name: Set Job 
@@ -126,3 +143,4 @@
           #secretNamespacedName: "{{ ansible_operator_meta.namespace+'/'+(connection_secret | default(tower_auth_secret, true)) }}"
           templateName: "{{ _job_name }}"
           verifySSL: false
+    when: start_k8s.changed != "false"
